@@ -40,10 +40,9 @@ From the repository root:
 
 ## Parameters
 
-- `--input-dir`: Source directory containing APNG/PNG files. Default: `assets/apng`.
+- `--input-dir`: Source directory containing PNG files. Default: `assets/apng`.
 - `--output-dir`: Destination directory for generated GIF files. Default: `assets/gif`.
-- `--pattern`: Filename glob pattern used to match source files. Default: `*_animated.png`. Use `"*.png"` to match all PNGs.
-- `--convert-static`: When set, also convert static PNGs that match `--pattern` (useful if you want non-animated PNGs converted).
+- `--skip-existing`: If set, already-existing GIF files in the output directory are not re-generated.
 - `--no-dither`: Disable Floyd–Steinberg dithering during quantization. By default the script applies dithering which can reduce visible banding but may increase local error.
 
 ## Examples
@@ -54,16 +53,17 @@ From the repository root:
 .venv\Scripts\python.exe convert_apng_to_gif.py
 ```
 
-- Convert every PNG in `assets/apng` (including static images):
-
-```powershell
-.venv\Scripts\python.exe convert_apng_to_gif.py --pattern "*.png" --convert-static
+- Convert every PNG in `assets/apng`:
+ 
+ ```powershell
+ .venv\Scripts\python.exe convert_apng_to_gif.py
 ```
 
-- Convert but disable dithering (faster, sometimes lower SSE):
+- Convert every PNG and skip files that already exist in the destination:
 
 ```powershell
-.venv\Scripts\python.exe convert_apng_to_gif.py --no-dither
+.venv\Scripts\python.exe convert_apng_to_gif.py --skip-existing
+```
 ```
 
 ## Behavior notes

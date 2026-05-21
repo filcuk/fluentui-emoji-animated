@@ -322,7 +322,7 @@ def main() -> None:
     parser.add_argument(
         "--input-dir",
         default="assets/apng",
-        help="Source directory containing APNG files.",
+        help="Source directory containing PNG files.",
     )
     parser.add_argument(
         "--output-dir",
@@ -330,14 +330,9 @@ def main() -> None:
         help="Destination directory for generated GIF files.",
     )
     parser.add_argument(
-        "--pattern",
-        default="*_animated.png",
-        help="Filename glob pattern to match input APNG files.",
-    )
-    parser.add_argument(
-        "--convert-static",
+        "--skip-existing",
         action="store_true",
-        help="Also convert static PNG files if they are present.",
+        help="Skip conversion for files whose GIF already exists in the destination.",
     )
     parser.add_argument(
         "--no-dither",
@@ -353,19 +348,25 @@ def main() -> None:
     if not input_dir.is_dir():
         raise SystemExit(f"Input directory does not exist: {input_dir}")
 
-    sources = sorted(input_dir.glob(args.pattern))
-    if not args.convert_static:
-        sources = [path for path in sources if path.suffix.lower() == ".png"]
+    sources = sorted(input_dir.glob("*.png"))
 
     if not sources:
-        raise SystemExit("No matching APNG files found to convert.")
+        raise SystemExit("No PNG files found to convert.")
 
+    converted = 0
+    skipped = 0
     for source in sources:
         target = output_dir / source.name
         target = target.with_suffix(".gif")
+        if args.skip_existing and target.exists():
+            skipped += 1
+            continue
         convert_apng_to_gif(source, target, use_dither=not args.no_dither)
+        converted += 1
 
-    print(f"Done. Converted {len(sources)} file(s) to {output_dir}.")
+    print(f"Done. Converted {converted} file(s) to {output_dir}.")
+    if args.skip_existing:
+        print(f"Skipped {skipped} existing file(s).")
 
 
 if __name__ == "__main__":
