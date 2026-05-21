@@ -43,11 +43,12 @@ From the repository root:
 - `--input-dir`: Source directory containing PNG files. Default: `assets/apng`.
 - `--output-dir`: Destination directory for generated GIF files. Default: `assets/gif`.
 - `--skip-existing`: If set, already-existing GIF files in the output directory are not re-generated.
+- `--workers`: Number of parallel worker processes to use for conversion. Default: `1`.
 - `--no-dither`: Disable Floyd–Steinberg dithering during quantization. By default the script applies dithering which can reduce visible banding but may increase local error.
 
 ## Examples
 
-- Convert the default animated files (default pattern):
+- Convert all PNG files in the input directory:
 
 ```powershell
 .venv\Scripts\python.exe convert_apng_to_gif.py
@@ -57,6 +58,12 @@ From the repository root:
  
  ```powershell
  .venv\Scripts\python.exe convert_apng_to_gif.py
+```
+
+- Convert every PNG using 8 parallel worker processes:
+
+```powershell
+.venv\Scripts\python.exe convert_apng_to_gif.py --workers 8
 ```
 
 - Convert every PNG and skip files that already exist in the destination:
@@ -76,4 +83,4 @@ From the repository root:
 ## Notes
 
 - The script requires `Pillow`.
-- It converts matching `*_animated.png` files by default.
+- It converts all `.png` files in the input directory.

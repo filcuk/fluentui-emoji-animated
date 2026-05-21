@@ -7,6 +7,7 @@ libimagequant support, it will use that method for higher-quality GIF palettes.
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
 try:
@@ -312,7 +313,12 @@ def convert_apng_to_gif(source: Path, target: Path, use_dither: bool = True) -> 
             optimize=False,
         )
 
-        print(f"Converted: {source.name} -> {output_path.name}")
+        return output_path
+
+
+def _convert_single(source: Path, target: Path, use_dither: bool) -> str:
+    output_path = convert_apng_to_gif(source, target, use_dither=use_dither)
+    return output_path.name
 
 
 def main() -> None:
@@ -335,6 +341,12 @@ def main() -> None:
         help="Skip conversion for files whose GIF already exists in the destination.",
     )
     parser.add_argument(
+        "--workers",
+        type=int,
+        default=1,
+        help="Number of parallel worker processes to use for conversion. Default: 1.",
+    )
+    parser.add_argument(
         "--no-dither",
         action="store_true",
         help="Disable Floyd-Steinberg dithering for GIF color quantization.",
@@ -353,7 +365,7 @@ def main() -> None:
     if not sources:
         raise SystemExit("No PNG files found to convert.")
 
-    converted = 0
+    entries = []
     skipped = 0
     for source in sources:
         target = output_dir / source.name
@@ -361,8 +373,23 @@ def main() -> None:
         if args.skip_existing and target.exists():
             skipped += 1
             continue
-        convert_apng_to_gif(source, target, use_dither=not args.no_dither)
-        converted += 1
+        entries.append((source, target, not args.no_dither))
+
+    converted = 0
+    if args.workers == 1:
+        for source, target, use_dither in entries:
+            output_name = _convert_single(source, target, use_dither)
+            print(f"Converted: {source.name} -> {output_name}")
+            converted += 1
+    else:
+        with ProcessPoolExecutor(max_workers=args.workers) as executor:
+            futures = {
+                executor.submit(_convert_single, source, target, use_dither): source
+                for source, target, use_dither in entries
+            }
+            for future in as_completed(futures):
+                future.result()
+                converted += 1
 
     print(f"Done. Converted {converted} file(s) to {output_dir}.")
     if args.skip_existing:
